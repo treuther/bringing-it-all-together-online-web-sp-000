@@ -1,3 +1,4 @@
+require 'pry'
 class Dog
   attr_accessor :id, :name, :breed
 
@@ -50,6 +51,34 @@ class Dog
     }
     
     self.new(attributes_hash)
+  end
+  
+  def self.find_by_id(id)
+    sql = <<-SQL
+      SELECT * FROM dogs
+      WHERE  id = ?
+      SQL
+      
+    DB[:conn].execute(sql, id).map do |row|
+      self.new_from_db(row)
+    end.first
+  end
+  
+  def self.find_or_create_by(name:, breed:)
+    sql = <<-SQL
+      SELECT * FROM dogs
+      WHERE name = ? AND breed = ?
+      SQL
+
+
+      dog = DB[:conn].execute(sql, name, breed).first
+
+      if dog
+        new_dog = self.new_from_db(dog)
+      else
+        new_dog = self.create({:name => name, :breed => breed})
+      end
+      new_dog
   end
 
 end
