@@ -2,12 +2,14 @@ require 'pry'
 class Dog
   attr_accessor :id, :name, :breed
 
+# has a name & breed, has an id that defaults to nil on initialization, accepts key value pairs as arguments to initialize
   def initialize(attributes)
     #id: nil, name:, breed:
     attributes.each {|key, value| self.send(("#{key}="), value)}
     self.id ||= nil
   end
-  
+
+# creates the dogs table in the database  
   def self.create_table
     sql = <<-SQL
       CREATE TABLE IF NOT EXISTS dogs (
@@ -19,13 +21,16 @@ class Dog
     
     DB[:conn].execute(sql)
   end
-  
+
+# drops the dogs table from the database
   def self.drop_table
     sql = "DROP TABLE IF EXISTS dogs"
     
     DB[:conn].execute(sql)
   end
-  
+
+# returns an instance of the dog class.
+# saves an instance of the dog class to the database and then sets the dog id attribute
   def save
     sql = "INSERT INTO dogs (name, breed)
     VALUES (?, ?)"
@@ -35,14 +40,18 @@ class Dog
     
     self
   end
-  
+
+# takes in a hash of attributes and uses metaprogramming to create a new dog object
+# Uses the #save method to save that dog to the database
+# Returns a new dog object
   def self.create(hash_of_attributes)
     dog = self.new(hash_of_attributes)
     dog.save
     
     dog
   end
-  
+
+# Creates an instance with corresponding attribute values 
   def self.new_from_db(row)
     attributes_hash = {
       :id => row[0],
@@ -52,7 +61,8 @@ class Dog
     
     self.new(attributes_hash)
   end
-  
+
+# Returns a new dob object by id
   def self.find_by_id(id)
     sql = <<-SQL
       SELECT * FROM dogs
@@ -63,7 +73,10 @@ class Dog
       self.new_from_db(row)
     end.first
   end
-  
+
+# Creates an instance of a dob it does not already exist
+# When 2 dogs have the same name and different breed, it returns the correct dog
+# When creating a new dog with the same name as persisted dogs, it returns the correct dog
   def self.find_or_create_by(name:, breed:)
     sql = <<-SQL
       SELECT * FROM dogs
@@ -80,7 +93,8 @@ class Dog
       end
       new_dog
   end
-  
+
+# Returns an instance of dog that matches the name from the DB
   def self.find_by_name(name)
     sql = <<-SQL
     SELECT * FROM dogs
@@ -92,7 +106,8 @@ class Dog
       self.new_from_db(row)
     end.first
   end
-  
+
+# Updates the record associated with a given instance
   def update
     sql = "UPDATE dogs SET name = ?, breed = ? WHERE id = ?"
     
